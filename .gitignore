@@ -35,3 +35,4 @@ build/
 # Ignore the application.properties file
 application.properties
 src/main/resources/application.properties
+src/main/resources/application.properties
