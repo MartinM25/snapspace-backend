@@ -1,5 +1,6 @@
 package com.snapspace.controller;
 
+import com.snapspace.dto.UserLoginRequest;
 import com.snapspace.model.User;
 import com.snapspace.service.UserService;
 import com.snapspace.dto.UserRegistrationRequest;
@@ -25,6 +26,16 @@ public class UserController {
           request.getPassword()
       );
       return ResponseEntity.ok(user);
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
+
+  @PostMapping("/login")
+  public ResponseEntity<?> loginUser(@RequestBody UserLoginRequest request) {
+    try {
+      String token = userService.loginUser(request.getUsernameOrEmail(), request.getPassword());
+      return ResponseEntity.ok(token);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
