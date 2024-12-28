@@ -1,15 +1,16 @@
 package com.snapspace.controller;
 
-import com.snapspace.dto.UserLoginRequest;
 import com.snapspace.model.User;
 import com.snapspace.service.UserService;
-import com.snapspace.dto.UserRegistrationRequest;
+import com.snapspace.dto.UserLoginRequest;
 import com.snapspace.dto.UserProfileResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.snapspace.dto.UserRegistrationRequest;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("api/v1/users")
@@ -64,5 +65,12 @@ public class UserController {
       System.err.println("Error retrieving profile: " + e.getMessage());
       return ResponseEntity.status(404).body(null);
     }
+  }
+
+  @PutMapping("/profile")
+  public ResponseEntity<?> updateProfile(@RequestBody User updatedUser, Authentication authentication) {
+    String currentUsername = authentication.getName();
+    User updatedProfile = userService.updateUserProfile(currentUsername, updatedUser);
+    return ResponseEntity.ok(updatedProfile);
   }
 }

@@ -38,7 +38,6 @@ public class UserService implements org.springframework.security.core.userdetail
         .build();
   }
 
-
   public User registerUser(String fullName, String username, String email, String password) {
 
     // Check if username or email already exists
@@ -59,6 +58,27 @@ public class UserService implements org.springframework.security.core.userdetail
     // Create and save new user
     User user = new User(fullName, username, email, defaultProfilePic, encryptedPassword);
     return userRepository.save(user);
+  }
+
+  public User updateUserProfile(String currentUsername, User updatedUser) {
+    User existingUser = userRepository.findByUsername(currentUsername)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+    // Update fields if provided in the request
+    if (updatedUser.getFullName() != null) {
+      existingUser.setFullName(updatedUser.getFullName());
+    }
+
+    if (updatedUser.getEmail() != null) {
+      existingUser.setEmail(updatedUser.getEmail());
+    }
+
+    if (updatedUser.getPassword() != null) {
+      existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+    }
+
+    // Save the updated user back to the database
+    return userRepository.save(existingUser);
   }
 
   public String loginUser(String usernameOrEmail, String password) {
