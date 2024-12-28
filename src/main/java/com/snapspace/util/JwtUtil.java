@@ -4,10 +4,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.Claims;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
 
+@Component
 public class JwtUtil {
 
   // Secret key for signing tokens
@@ -18,25 +21,26 @@ public class JwtUtil {
 
   //  Generate a JWT token.
   public static String generateToken(String userId, String username) {
-    return Jwts.builder()
-        .setSubject(userId) // Set the user ID as the subject
-        .claim("username", username) // Include username as a claim
-        .setIssuedAt(new Date()) // Set the issue date
-        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // Set expiration
-        .signWith(SECRET_KEY) // Sign with the secret key
+    String token = Jwts.builder()
+        .setSubject(userId)
+        .claim("username", username)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+        .signWith(SECRET_KEY)
         .compact();
+    System.out.println("Generated token for user: " + username);
+    return token;
   }
 
   //  Validate token
-  public static boolean validateToken(String token) {
+  public static boolean validateToken(String token, UserDetails userDetails) {
     try {
-      Jwts.parserBuilder()
-          .setSigningKey(SECRET_KEY)
-          .build()
-          .parseClaimsJws(token);
-      return true; // Token is valid
+      Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
+      System.out.println("Token is valid for user: " + userDetails.getUsername());
+      return true;
     } catch (Exception e) {
-      return false; // Token is invalid
+      System.err.println("Invalid token: " + e.getMessage());
+      return false;
     }
   }
 
@@ -52,11 +56,18 @@ public class JwtUtil {
 
   // Extract the username from a JWT token.
   public static String extractUsername(String token) {
-    Claims claims = Jwts.parserBuilder()
-        .setSigningKey(SECRET_KEY)
-        .build()
-        .parseClaimsJws(token)
-        .getBody();
-    return claims.get("username", String.class);
+    try {
+      Claims claims = Jwts.parserBuilder()
+          .setSigningKey(SECRET_KEY)
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
+      String username = claims.get("username", String.class);
+      System.out.println("Extracted username from token: " + username);
+      return username;
+    } catch (Exception e) {
+      System.err.println("Error extracting username from token: " + e.getMessage());
+      throw e;
+    }
   }
 }

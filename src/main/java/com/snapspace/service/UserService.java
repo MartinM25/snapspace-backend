@@ -1,22 +1,43 @@
 package com.snapspace.service;
 
 import com.snapspace.model.User;
-import com.snapspace.repository.IUserRepository;
 import com.snapspace.util.JwtUtil;
+import com.snapspace.dto.UserProfileResponse;
+import com.snapspace.repository.IUserRepository;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.User.UserBuilder;
+import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements org.springframework.security.core.userdetails.UserDetailsService {
 
   @Autowired
   private IUserRepository userRepository;
 
   @Autowired
   private BCryptPasswordEncoder passwordEncoder;
+
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    System.out.println("Loading user by username: " + username);
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> {
+          System.err.println("User not found for username: " + username);
+          return new UsernameNotFoundException("User not found");
+        });
+
+    System.out.println("User found: " + user.getUsername());
+    return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
+        .password(user.getPassword())
+        .roles("USER") // Adjust roles as needed
+        .build();
+  }
+
 
   public User registerUser(String fullName, String username, String email, String password) {
 
@@ -63,4 +84,21 @@ public class UserService {
     // Generate JWT token
     return JwtUtil.generateToken(user.getId(), user.getUsername());
   }
+
+  public UserProfileResponse getProfileByUsername(String username) {
+    // Find the user by username
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    // Build the response DTO
+    return new UserProfileResponse(
+        user.getId(),
+        user.getFullName(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getProfilePic()
+    );
+  }
+
+
 }
